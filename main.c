@@ -6,29 +6,28 @@
 #include <sys/time.h>
 #include <stdlib.h>
 
-// Prior reading:
-//
-// Meltdown Paper
-// https://meltdownattack.com/meltdown.pdf
-//
-// FLUSH + RELOAD Side Channel Paper
-// https://eprint.iacr.org/2013/448.pdf
-//
-// GNU GCC Extended Inline Assembly
-// https://gcc.gnu.org/onlinedocs/gcc/Using-Assembly-Language-with-C.html
+/*
+ * Prior reading:
+ *
+ * Meltdown Paper
+ * https://meltdownattack.com/meltdown.pdf
+ *
+ * FLUSH + RELOAD Side Channel Paper
+ * https://eprint.iacr.org/2013/448.pdf
+ *
+ * GNU GCC Extended Inline Assembly
+ * https://gcc.gnu.org/onlinedocs/gcc/Using-Assembly-Language-with-C.html
+ *
+ * Transactional Memory (TSX-NI) XBEGIN / XEND
+ * https://software.intel.com/en-us/node/524025
+ * https://software.intel.com/en-us/node/695154
+ */
 
 int main(int argc, char **argv) {
-//
-//    unsigned int *p = (unsigned int *) 0;
-//    printf("[%p] = %u", p, *p);
-
-//    uint64_t  i = 0;
-//    asm volatile ("mov rax, [12]" : "=r"(i));
-//    printf("%lu\n", i);
 
     uint8_t some_data = 0xff;
 
-    // Of course, I can't allocate this injective side-channel
+    // I'd rather not allocate this injective side-channel
     // on the stack since the stack goes towards less significant, not more significant
     // and x86/x64 addressing can only add two registers, not subtract
     //
@@ -66,10 +65,9 @@ int main(int argc, char **argv) {
                       // END TRANSIENT EXECUTION
 
                       "xend                             \n\t"
-
                       "skip:                            \n\t"
 
-        ::"c" /* rcx */ (0x123), /* rbx */ "b" (probe_array)
+        ::"c" /* rcx */ (&some_data), /* rbx */ "b" (probe_array)
         : "rax", "al"
         );
 
