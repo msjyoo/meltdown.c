@@ -21,6 +21,10 @@
  * Transactional Memory (TSX-NI) XBEGIN / XEND
  * https://software.intel.com/en-us/node/524025
  * https://software.intel.com/en-us/node/695154
+ *
+ * Miscellaneous
+ * https://software.intel.com/en-us/articles/introduction-to-x64-assembly
+ * https://razorpay.com/blog/meltdown-paper-summary/
  */
 
 int main(int argc, char **argv) {
