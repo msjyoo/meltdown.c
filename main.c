@@ -1,6 +1,8 @@
 // Copyright (c) Michael Yoo <michael@yoo.id.au>
 // All Rights Reserved
 
+// gcc -o m main.c -masm=intel
+
 #include <stdio.h>
 #include <stdint.h>
 #include <sys/time.h>
@@ -43,6 +45,9 @@ int main(int argc, char **argv) {
     for (int i = 0; i < 256; i++) {
         asm volatile ("clflush [%0] \n\t"::"r" (probe_array + (i * 4096)));
     }
+
+    uint32_t lowestTime = UINT32_MAX;
+    int lowestVal = -1;
 
     for (int i = 0; i < 256; i++) {
         uint32_t time = 0;
@@ -102,10 +107,13 @@ int main(int argc, char **argv) {
         );
 
         //printf("[0x%02x] %u\n", i, time);
-        if (time < 400) {
-            printf("[0x%02x] %u\n", i, time);
+        if (time < lowestTime) {
+            lowestTime = time;
+            lowestVal = i;
         }
     }
+
+    printf("[0x%02x] %u\n", lowestVal, lowestTime);
 
     return 0;
 }
