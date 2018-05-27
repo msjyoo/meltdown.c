@@ -2,6 +2,6 @@
 /cmake-build-debug/
 
 /*
-!/main.c
+!/meltdown.c
 !/CMakeLists.txt
 !/.gitignore

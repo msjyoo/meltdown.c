@@ -1,7 +1,7 @@
 // Copyright (c) Michael Yoo <michael@yoo.id.au>
 // All Rights Reserved
 
-// gcc -o m main.c -masm=intel
+// gcc -o m meltdown.c -masm=intel
 
 #include <stdio.h>
 #include <stdint.h>
