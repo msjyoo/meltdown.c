@@ -39,7 +39,10 @@ int main(int argc, char **argv) {
     //
     // 32768 = 4kB (page size) * 2^8=255 possible combinations; see `jz retry`
     uint8_t *probe_array = calloc(4096 * 256 /* 0..255 */, sizeof(uint8_t));
-    // TODO: Check rbx != NULL
+    if (probe_array == NULL) {
+        perror("Failed to allocate memory for side channel!\n");
+        exit(1);
+    }
 
     // Flush all cache lines
     for (int i = 0; i < 256; i++) {
